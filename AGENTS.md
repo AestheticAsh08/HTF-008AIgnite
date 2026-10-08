@@ -1,8 +1,7 @@
-# NOURA — Where Surplus Finds Purpose
+# FoodBridge — Where Surplus Finds Purpose
 
-> NOURA is a food redistribution platform that connects surplus food from events with nearby orphanages, shelters and community kitchens. An optimisation model (Google OR-Tools CP-SAT) decides how one large donation should be split across several suitable receivers, and the nearest free volunteer is assigned to carry each share before the food stops being safe to eat.
+> FoodBridge is a food redistribution platform that connects surplus food from events with nearby orphanages, shelters and community kitchens. An optimisation model (Google OR-Tools CP-SAT) decides how one large donation should be split across several suitable receivers, and the nearest free volunteer is assigned to carry each share before the food stops being safe to eat.
 
-NOURA was earlier called **FoodBridge**. The code, the web UI and the database file (`foodbridge.db`) still use the old name.
 
 ## Team
 
