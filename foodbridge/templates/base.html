@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{% block title %}FoodBridge{% endblock %}</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='vendor/leaflet/leaflet.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<script src="{{ url_for('static', filename='vendor/leaflet/leaflet.js') }}"></script>
+<script src="{{ url_for('static', filename='common.js') }}"></script>
+</head>
+<body>
+<header class="top">
+  <a class="brand" href="{{ url_for('index') }}">🍲 FoodBridge</a>
+  <nav>
+    <a href="{{ url_for('volunteer_home') }}">Volunteers</a>
+    {% if user %}
+      <a href="{{ url_for(user['role']) }}">My {{ user['role'] }} page</a>
+      <span>{{ user['name'] }}</span>
+      <a href="{{ url_for('logout') }}">Logout</a>
+    {% else %}
+      <a href="{{ url_for('login') }}">Login</a>
+      <a href="{{ url_for('register', role='donor') }}">Donate</a>
+      <a href="{{ url_for('register', role='receiver') }}">Receive</a>
+    {% endif %}
+  </nav>
+</header>
+<main>
+  {% with msgs = get_flashed_messages(with_categories=true) %}
+    {% for cat, m in msgs %}<div class="flash {{ cat }}">{{ m }}</div>{% endfor %}
+  {% endwith %}
+  {% block body %}{% endblock %}
+</main>
+</body>
+</html>
