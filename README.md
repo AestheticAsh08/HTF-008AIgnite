@@ -150,7 +150,7 @@ What can be tested locally: registering donors and receivers, posting food, seei
 
 ## Demo Video
 
-**Demo Video:** [Add video URL]
+**Demo Video:** https://youtu.be/wwif1PEBiwY?feature=shared
 
 ## Open Source and AI Usage
 
