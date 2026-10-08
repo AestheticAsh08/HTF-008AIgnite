@@ -111,11 +111,16 @@ If a category or technology is not implemented in the project, specify `N/A` ins
 
 ### How It Works
 
-[Explain the major components of the system and how they interact.]
+
+FoodBridge connects donors, receivers, and volunteers. Donors post surplus food, while receivers provide their needs, capacity, dietary preferences, and location. The system filters compatible receivers and uses OR-Tools CP-SAT to optimize how the food is distributed. Suitable volunteers are then assigned for pickup and delivery, with OpenStreetMap, Nominatim, Leaflet, and OSRM supporting location search and route planning.
+
+
 
 ### Technical Decisions
 
-[Explain important architectural, algorithmic, or engineering decisions made during development.]
+We chose Flask + SQLite for a lightweight and easy-to-deploy backend. OR-Tools CP-SAT was selected to handle the constrained allocation problem, allowing donations to be split across multiple receivers while respecting capacity, distance, compatibility, and food-time constraints. OpenStreetMap and OSRM provide open-source mapping and routing, while rule-based freshness estimation keeps time-sensitive food decisions simple and explainable.
+
+
 
 ## Implementation During the Hackathon
 
@@ -184,21 +189,22 @@ The project does not currently use a generative AI/LLM such as GPT, Qwen, Llama,
 
 ### Prerequisites
 
-- [Requirement]
-- [Requirement]
+- Python 3.10 or later
+- Git
+- Internet connection for map, geocoding, and routing services
 
 ### Installation
 
 ```bash
-git clone [repository-url]
-cd [project-directory]
-[installation-command]
+git clone https://github.com/AestheticAsh08/HTF-008AIgnite/tree/main
+cd foodbridge
+
 ```
 
 ### Environment Variables
 
 ```env
-[VARIABLE_NAME]=[value]
+no variables
 ```
 
 
@@ -206,12 +212,16 @@ cd [project-directory]
 ### Running the Project
 
 ```bash
-[run-command]
+python app.py
 ```
 
 ### Usage
 
-[Explain the basic steps required to use the project.]
+1. Register/login as a **Donor, Receiver, or Volunteer**.
+2. Donors post surplus food with quantity, type, preparation time, and location.
+3. Receivers provide their capacity, dietary preference, and location.
+4. FoodBridge matches and optimizes donations, then assigns available volunteers for delivery.
+5. Track the donation from **pickup to delivery** using the map and delivery status.
 
 ## Devpost Submission
 
