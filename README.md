@@ -145,15 +145,40 @@ The submitted application should be functional and accessible through the provid
 
 ### AI / Models
 
-- **[Model]:** [How it is used]
+- **Google OR-Tools CP-SAT Solver**: Used as the optimization engine to intelligently split a large food donation across multiple suitable receivers while respecting constraints such as receiver capacity, minimum useful delivery size, maximum number of receivers, distance, and food availability time.
+- **Rule-based food freshness model**: Estimates the safe-until window for different food categories based on preparation time. This is used to prevent the system from suggesting deliveries that are unlikely to arrive within the estimated usable window.
+- **Rule-based matching score**: Ranks eligible receivers using factors such as distance, remaining food time, and receiver capacity.
 
 ### Open Source Components
 
-- **[Library / Framework]:** [Purpose]
-- **[Dataset]:** [Purpose]
-- **[API / Service]:** [Purpose]
+- **Flask**: Python web framework used to build the FoodBridge backend and web application.
+- **SQLite**: Lightweight database used to store users, donations, receivers, allocations, and delivery information.
+- **Google OR-Tools**: Open-source optimization toolkit; CP-SAT is used for multi-receiver donation allocation.
+- **Leaflet**: Open-source JavaScript mapping library used for interactive maps and markers.
+- **OpenStreetMap**: Provides open map data and map tiles.
+- **Nominatim**: OpenStreetMap-based geocoding and place-search service used for location search and reverse geocoding.
+- **OSRM (Open Source Routing Machine)**: Used to calculate road routes, distances, and estimated travel times between donors, receivers, and volunteers.
+- **Google Maps**: Used as an optional external directions link for users who want turn-by-turn navigation.
 
-[Include relevant licenses, attribution, and acknowledgements for external components.]
+### Data / Datasets
+
+- **No external training dataset is used.**
+- User-created donor, receiver, volunteer, and donation data is stored in the application's SQLite database.
+- Food-category freshness rules are manually defined in the application rather than learned from a dataset.
+
+### Licenses and Attribution
+
+FoodBridge uses open-source software and open geographic data. We retain the relevant attribution for OpenStreetMap contributors and use the respective projects according to their licenses.
+
+- **OpenStreetMap data**: © OpenStreetMap contributors
+- **Leaflet**: BSD-2-Clause
+- **Google OR-Tools**: Apache License 2.0
+- **Flask**: BSD-3-Clause
+- **SQLite**: Public domain
+- **OSRM**: BSD-2-Clause
+- **Nominatim / OpenStreetMap**: OpenStreetMap project services and attribution requirements apply.
+
+The project does not currently use a generative AI/LLM such as GPT, Qwen, Llama, or Mistral. The core AI/optimization component is the open-source OR-Tools constraint optimization system, combined with explainable rule-based matching and freshness estimation.
 
 ## Setup and Usage
 
