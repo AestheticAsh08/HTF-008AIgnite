@@ -101,14 +101,15 @@ Another important aspect of NOURA is that AI is not being added simply as a chat
 ### Technology Stack
 
 
-| Category        | Technologies                |
-| --------------- | --------------------------- |
-| Frontend        | [Technologies / N/A]        |
-| Backend         | [Technologies / N/A]        |
-| Database        | [Technologies / N/A]        |
-| AI / ML         | [Models / frameworks / N/A] |
-| Infrastructure  | [Technologies / N/A]        |
-| APIs / Services | [Services / N/A]            |
+| Category            | Technologies                                                                                                                                                                                                                                                                         |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Frontend**        | Server-rendered HTML using **Jinja2 templates**, **CSS**, and **plain JavaScript**. **Leaflet 1.9.4** is used for interactive maps. Pages use periodic polling for live updates.                                                                                                     |
+| **Backend**         | **Python** and **Flask**. Flask handles routing, form processing, matching logic, volunteer assignment, tracking, and autonomous replanning.                                                                                                                                         |
+| **Database**        | **SQLite**, storing receivers, volunteers, donations, and match/assignment information.                                                                                                                                                                                              |
+| **AI / ML**         | **Rule-based AI / intelligent decision system** using food compatibility, receiver capacity, actual food need, urgency/deadline, and road distance to rank matches. Automatic volunteer assignment and autonomous re-planning are also implemented. No trained ML model is required. |
+| **Infrastructure**  | Runs locally using the **Flask development server** at `127.0.0.1:5000`. Built primarily with open-source technologies.                                                                                                                                                              |
+| **APIs / Services** | **OpenStreetMap** for map data, **Nominatim** for address/geocoding, **OSRM** for road distance and route calculation, **Leaflet** for map visualization, and **Google Maps Directions** links for navigation.                                                                       |
+
 
 
 If a category or technology is not implemented in the project, specify `N/A` instead of leaving the field blank.
