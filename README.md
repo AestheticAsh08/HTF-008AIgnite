@@ -4,15 +4,15 @@
 
 ## Team
 
-**Team Name:** [Team Name]
+**Team Name:** AIgnite
 
 
-| Member | Contribution   |
-| ------ | -------------- |
-| [Name] | [Contribution] |
-| [Name] | [Contribution] |
-| [Name] | [Contribution] |
-| [Name] | [Contribution] |
+| Member          | Contribution   |
+| --------------- | -------------- |
+| B Ashwin        | [Contribution] |
+| C B Arunvanan   | [Contribution] |
+| E Sivam         | [Contribution] |
+| Pragadeeshvaran | [Contribution] |
 
 
 ## Problem Statement
