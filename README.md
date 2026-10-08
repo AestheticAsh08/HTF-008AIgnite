@@ -6,12 +6,7 @@
 
 **Team Name:** AIgnite
 
-| Member            | Contribution |
-| ------------------| ------------ |
-| B Aswin           | Project architecture, application logic, AI integration, GitHub and documentation |
-| C B Arunvanan     | AI/ML integration and matching logic |
-| E Sivam Pandiyan  | Streamlit interface and user experience |
-| Pragadeeshvaran R | Donor and receiver data handling, integration and testing |
+
 
 ---
 
@@ -126,12 +121,12 @@ If a category or technology is not implemented in the project, specify `N/A` ins
 
 [Describe what the team built during the Hack Day and the major functionality or components completed during the event.]
 
-### Team Contributions
-
-- **[Member Name]:** [Contribution]
-- **[Member Name]:** [Contribution]
-- **[Member Name]:** [Contribution]
-- **[Member Name]:** [Contribution]
+| Member            | Contribution |
+| ------------------| ------------ |
+| B Aswin           | Project architecture, application logic, AI integration, GitHub and documentation |
+| C B Arunvanan     | AI/ML integration and matching logic |
+| E Sivam Pandiyan  | Streamlit interface and user experience |
+| Pragadeeshvaran R | Donor and receiver data handling, integration and testing |
 
 ## Working Application
 
