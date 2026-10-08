@@ -268,7 +268,7 @@ This project is licensed under the MIT License. See [LICENSE](LICENSE).
 
 ## Devpost Submission
 
-**Devpost Project:** [Add Devpost project URL]
+**Devpost Project:** https://devpost.com/software/noura-where-surplus-finds-purpose-cesxop#updates
 
 ## Submission Checklist
 
