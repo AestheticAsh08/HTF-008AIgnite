@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block body %}
+<h2>Volunteers <span class="muted">· demo accounts</span></h2>
+<p class="muted">Volunteers are the only demo data in this project. Pick a volunteer to see their pickup task. The nearest free volunteer is assigned automatically when a receiver accepts food.</p>
+<div class="row" style="margin-bottom:12px">
+  {% for v in vols %}
+    <a class="btn {{ '' if vid == v['id'] else 'sec' }}" href="{{ url_for('volunteer_view', vid=v['id']) }}">
+      {{ v['name'] }} {{ '🟢' if v['available'] else '🔴' }}</a>
+  {% endfor %}
+</div>
+
+{% if vid %}
+<div class="grid2">
+  <div class="card">
+    <h3>Current task</h3>
+    <div id="task"><p class="muted">Loading...</p></div>
+  </div>
+  <div class="card">
+    <div id="map" class="map tall"></div>
+    <p class="muted">🛵 volunteer &nbsp; 🍲 pickup &nbsp; 🏠 drop-off</p>
+    <div id="info" class="muted"></div>
+  </div>
+</div>
+<script>
+  var VID={{ vid }};
+  var map=mkMap('map',DEFAULT_CENTER,11), g=L.layerGroup().addTo(map), lastKey='';
+  function advance(did){
+    fetch('/volunteer/'+VID+'/advance/'+did,{method:'POST'}).then(function(){lastKey='';load();});
+  }
+  function load(){
+    fetch('/api/volunteer/'+VID+'/task').then(function(r){return r.json();}).then(function(t){
+      var box=document.getElementById('task');
+      if(!t){
+        box.innerHTML='<p class="muted">No task right now. This volunteer is free and will be assigned automatically when a receiver accepts nearby food.</p>';
+        g.clearLayers();
+        fetch('/api/volunteers').then(function(r){return r.json();}).then(function(vs){
+          var me=vs.find(function(v){return v.id===VID;});
+          if(me){L.marker([me.lat,me.lng],{icon:pin('🛵')}).addTo(g).bindPopup('You');map.setView([me.lat,me.lng],12);}
+        });
+        lastKey=''; return;
+      }
+      var toPickup=t.status==='accepted';
+      box.innerHTML='<div class="item"><h4>'+esc(t.dish)+' <span class="pill '+t.status+'">'+t.status.replace('_',' ')+'</span></h4>'
+        +'<div><span class="tag">'+dietMark(t.diet)+'</span><span class="tag">'+t.portions+' portions</span><span class="tag '+((new Date(t.safe_until.replace(' ','T'))-new Date())<45*60000?'urgent':'')+'">safe until '+fmtTime(t.safe_until)+'</span></div>'
+        +stepsHtml(t.status)
+        +'<p><b>Pickup:</b> '+esc(t.donor_name)+' ('+esc(t.donor_phone)+')<br><span class="muted">'+esc(t.pickup_address||'See map')+'</span></p>'
+        +'<p><b>Drop-off:</b> '+esc(t.receiver_name)+' ('+esc(t.receiver_phone)+')<br><span class="muted">'+esc(t.receiver_address||'')+'</span></p>'
+        +(t.notes?'<p class="muted">Note: '+esc(t.notes)+'</p>':'')
+        +'<button onclick="advance('+t.id+')">'+(toPickup?'I picked it up':'I delivered it')+'</button></div>';
+      var key=t.id+t.status;
+      if(key===lastKey) return; lastKey=key;
+      g.clearLayers();
+      var v=[t.vlat,t.vlng], p=[t.lat,t.lng], r=[t.rlat,t.rlng];
+      L.marker(v,{icon:pin('🛵')}).addTo(g).bindPopup('You');
+      L.marker(p,{icon:pin('🍲')}).addTo(g).bindPopup('Pickup: '+esc(t.donor_name));
+      L.marker(r,{icon:pin('🏠')}).addTo(g).bindPopup('Drop-off: '+esc(t.receiver_name));
+      map.fitBounds([v,p,r],{padding:[40,40]});
+      var legs=toPickup?[[v,p,'#c2410c','To pickup'],[p,r,'#1d4ed8','To drop-off']]:[[v,r,'#1d4ed8','To drop-off']];
+      var parts=[]; document.getElementById('info').textContent='Calculating route...';
+      legs.forEach(function(l){
+        drawRoute(g,l[0],l[1],l[2],function(x){
+          parts.push(l[3]+': '+x.km.toFixed(1)+' km, ~'+Math.round(x.min)+' min');
+          document.getElementById('info').textContent=parts.join(' · ');
+        });
+      });
+    });
+  }
+  load(); setInterval(load,6000);
+</script>
+{% else %}
+<div class="card">
+  <div id="map" class="map tall"></div>
+  <p class="muted">🛵 demo volunteers (positions are sample data around Kochi / Angamaly)</p>
+</div>
+<script>
+  var map=mkMap('map',DEFAULT_CENTER,10);
+  fetch('/api/volunteers').then(function(r){return r.json();}).then(function(vs){
+    var pts=[];
+    vs.forEach(function(v){
+      L.marker([v.lat,v.lng],{icon:pin('🛵')}).addTo(map).bindPopup('<b>'+esc(v.name)+'</b><br>'+esc(v.vehicle)+'<br>'+(v.available?'Available':'On a delivery'));
+      pts.push([v.lat,v.lng]);
+    });
+    if(pts.length) map.fitBounds(pts,{padding:[40,40]});
+  });
+</script>
+{% endif %}
+{% endblock %}
