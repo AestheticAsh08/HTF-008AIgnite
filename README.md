@@ -1,50 +1,102 @@
-# [Project Name]
+# NOURA — Where Surplus Finds Purpose
 
-> [One-line description of the project and what it does.]
+> NOURA is an AI-powered food redistribution platform that connects surplus food from event organizers with suitable recipient organizations, helping good food reach the right place at the right time instead of going to waste.
 
 ## Team
 
 **Team Name:** AIgnite
 
+| Member            | Contribution |
+| ------------------| ------------ |
+| B Aswin           | Project architecture, application logic, AI integration, GitHub and documentation |
+| C B Arunvanan     | AI/ML integration and matching logic |
+| E Sivam Pandiyan  | Streamlit interface and user experience |
+| Pragadeeshvaran R | Donor and receiver data handling, integration and testing |
 
-| Member          | Contribution   |
-| --------------- | -------------- |
-| B Ashwin        | [Contribution] |
-| C B Arunvanan   | [Contribution] |
-| E Sivam         | [Contribution] |
-| Pragadeeshvaran | [Contribution] |
+---
+
+# Problem Statement
+
+## The Problem
+
+Large events such as college fests, conferences, weddings, and corporate gatherings often prepare food based on estimated attendance. When fewer people attend than expected, a significant amount of prepared food can remain unused.
+
+At the same time, NGOs, community kitchens, shelters, and other local organizations may be able to make use of these meals.
+
+The problem is not always the lack of food or the lack of organizations willing to receive it. The real challenge is **connecting available surplus food with the right recipient quickly enough**.
+
+Today, this process can depend on manual calls, messages, searching for organizations, and coordinating pickup between multiple people. This becomes especially difficult when the food is available only for a limited period.
+
+## Why We Chose This Problem
+
+We chose this problem because food waste and the need for food can exist at the same time, while the connection between them can still be inefficient.
+
+Surplus food from an event can become difficult to redistribute simply because the right recipient is not identified quickly.
+
+We wanted to build a solution around a simple idea:
+
+> **If good food is available, it should have a chance to reach someone who can use it.**
+
+NOURA aims to make that connection faster, more structured, and easier to coordinate.
+
+---
+
+# Solution
+
+NOURA is a platform that connects **food donors** with **recipient organizations** through a structured information and matching workflow.
+
+The donor provides information about the available surplus food, while the receiver provides information about their organization, capacity, requirements, and availability.
+
+The system evaluates the information from both sides and uses an AI-assisted matching process to identify suitable connections.
+
+A **volunteer or NGO acts as the coordination layer**, helping connect the donor and receiver and facilitating the redistribution process.
+
+For the Hack Day prototype, NOURA is implemented as a local **Streamlit application** that demonstrates this complete workflow.
+
+## Key Features
+
+- **Donor Information:** Collects information about the event, available food, quantity, location, preparation time, dietary details, and availability.
+- **Receiver Information:** Collects organization details, location, capacity, food requirements, and availability.
+- **AI-Assisted Matching:** Uses an open-weight AI model to assist in identifying suitable donor–receiver connections.
+- **Volunteer / NGO Coordination:** Provides a coordination layer between donors and receivers to help facilitate redistribution.
+
+---
+
+# Innovation and Differentiation
+
+NOURA focuses on solving the **connection problem** between surplus food and organizations that can use it.
+
+Instead of relying entirely on manual searching, phone calls, or scattered communication, NOURA structures information from both donors and receivers and uses it to assist the matching process.
+
+The project also keeps humans involved in the process.
+
+Volunteers and NGOs are not replaced by AI. They remain an important coordination layer that can review and facilitate the connection between the donor and receiver.
+
+Another important aspect of NOURA is that AI is not being added simply as a chatbot. It is incorporated into the core matching workflow to help interpret donor and receiver information and provide a meaningful recommendation.
+
+---
+
+# Technical Implementation
+
+## Architecture
 
 
-## Problem Statement
+    A[Food Donor] --> B[Donor Information]
+    C[Recipient Organization] --> D[Receiver Information]
 
-### The Problem
+    B --> E[Streamlit Application]
+    D --> E
 
-[Describe the problem being addressed, who is affected by it, and the context in which it occurs.]
+    E --> F[Data Validation]
+    F --> G[Matching Logic]
 
-### Why We Chose This Problem
+    G --> H[Open-Weight AI Model]
+    H --> I[AI-Assisted Recommendation]
 
-[Explain why the team selected this problem and why solving it is important.]
+    I --> J[Volunteer / NGO Coordination]
+    J --> K[Recipient Organization]
 
-## Solution
-
-[Describe the proposed solution and how it addresses the problem.]
-
-### Key Features
-
-- [Feature 1]
-- [Feature 2]
-- [Feature 3]
-- [Feature 4]
-
-## Innovation and Differentiation
-
-[Explain what is innovative about the approach and how it differs from existing or conventional solutions.]
-
-## Technical Implementation
-
-### Architecture
-
-[Add the system architecture or workflow Mermaid diagram here.]
+    J --> L[Redistribution Process]
 
 ### Technology Stack
 
