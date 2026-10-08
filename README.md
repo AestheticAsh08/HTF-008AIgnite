@@ -119,7 +119,6 @@ If a category or technology is not implemented in the project, specify `N/A` ins
 
 ## Implementation During the Hackathon
 
-[Describe what the team built during the Hack Day and the major functionality or components completed during the event.]
 
 | Member            | Contribution |
 | ------------------| ------------ |
