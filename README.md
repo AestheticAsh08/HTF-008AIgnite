@@ -1,213 +1,224 @@
-# NOURA — Where Surplus Finds Purpose
+# FoodBridge — Where Surplus Finds Purpose
 
-> NOURA is an AI-powered food redistribution platform that connects surplus food from event organizers with suitable recipient organizations, helping good food reach the right place at the right time instead of going to waste.
+> FoodBridge is a food redistribution platform that connects surplus food from events with nearby orphanages, shelters and community kitchens. An optimisation model (Google OR-Tools CP-SAT) decides how one large donation should be split across several suitable receivers, and the nearest free volunteer is assigned to carry each share before the food stops being safe to eat.
 
 ## Team
 
 **Team Name:** AIgnite
 
-
+| Member            | Contribution |
+| ----------------- | ------------ |
+| B Aswin           | Project architecture, application logic, optimisation integration, GitHub and documentation |
+| C B Arunvanan     | Split-planning optimisation (OR-Tools) and matching logic |
+| E Sivam Pandiyan  | Web interface (Flask templates, CSS, JavaScript, Leaflet maps) and user experience |
+| Pragadeeshvaran R | Donor and receiver data handling, integration and testing |
 
 ---
 
-# Problem Statement
+## Problem Statement
 
-## The Problem
+### The Problem
 
-Large events such as college fests, conferences, weddings, and corporate gatherings often prepare food based on estimated attendance. When fewer people attend than expected, a significant amount of prepared food can remain unused.
+Large events such as college fests, conferences, weddings and corporate gatherings prepare food based on expected attendance. When fewer people turn up, a lot of good, prepared food is left over.
 
-At the same time, NGOs, community kitchens, shelters, and other local organizations may be able to make use of these meals.
+At the same time, orphanages, shelters and community kitchens nearby could use those meals.
 
-The problem is not always the lack of food or the lack of organizations willing to receive it. The real challenge is **connecting available surplus food with the right recipient quickly enough**.
+The gap is usually not the food or the willingness to receive it. It is **connecting the surplus with the right receiver fast enough**. Today that means phone calls, messages, searching for organisations and arranging someone to carry the food, all while the food has only a few hours before it is no longer safe.
 
-Today, this process can depend on manual calls, messages, searching for organizations, and coordinating pickup between multiple people. This becomes especially difficult when the food is available only for a limited period.
+### Why We Chose This Problem
 
-## Why We Chose This Problem
+Food waste and food need often exist a few kilometres apart, at the same time. The surplus is lost simply because nobody finds the right receiver in time.
 
-We chose this problem because food waste and the need for food can exist at the same time, while the connection between them can still be inefficient.
-
-Surplus food from an event can become difficult to redistribute simply because the right recipient is not identified quickly.
-
-We wanted to build a solution around a simple idea:
+We built FoodBridge around one idea:
 
 > **If good food is available, it should have a chance to reach someone who can use it.**
 
-NOURA aims to make that connection faster, more structured, and easier to coordinate.
+---
+
+## Solution
+
+FoodBridge is a web application with three roles:
+
+- **Donors** (event organisers, caterers, halls) post leftover food: dish, food category, veg / non-veg, number of portions, time it was cooked, and the pickup point on a map.
+- **Receivers** (orphanages, shelters, community kitchens) register their location, how many portions they can take, and whether they accept veg only or veg and non-veg.
+- **Volunteers** carry each accepted share from the pickup point to the receiver.
+
+When food is posted, FoodBridge estimates how long it stays safe, filters out receivers that can't take it, and plans how to split the portions across the best receivers. Each receiver sees only its suggested share and can accept or decline. Every accepted share is automatically given to the nearest free volunteer, and progress is tracked from posted to delivered.
+
+### Key Features
+
+- **Food-safety window:** a safe-until time is estimated from the food category and cooking time. Food already past its window can't be listed, and expired donations stop being offered.
+- **Veg / non-veg matching:** non-veg food is never offered to, or accepted by, a veg-only receiver. The server re-checks this on accept, not only in the UI.
+- **AI split planning:** one large donation is split across up to 4 receivers using a CP-SAT optimisation model (see below).
+- **Automatic re-planning:** if a receiver declines, accepts, or a new receiver signs up, the plan for the remaining portions is recalculated.
+- **Automatic volunteer assignment:** each accepted share gets the nearest available volunteer.
+- **Live tracking on maps:** Leaflet + OpenStreetMap maps with pickup and drop-off pins, road routes (OSRM), a status tracker (Posted → Accepted → Picked up → Delivered), and a Google Maps directions link. Dashboards refresh every 6–8 seconds.
+- **Impact counter:** the home page shows meals delivered, deliveries, donors and receivers.
 
 ---
 
-# Solution
+## Innovation and Differentiation
 
-NOURA is a platform that connects **food donors** with **recipient organizations** through a structured information and matching workflow.
+Most food-sharing setups are a list of posts that receivers browse, or a chain of phone calls. FoodBridge treats it as an **allocation problem** instead:
 
-The donor provides information about the available surplus food, while the receiver provides information about their organization, capacity, requirements, and availability.
+- A wedding with 120 leftover portions shouldn't go to one shelter that can only use 30. FoodBridge splits the donation so more people are fed, while avoiding tiny deliveries that waste a volunteer's trip.
+- The plan considers **fairness**: receivers who haven't received food today are preferred.
+- Hard safety and practicality rules (diet, distance, time to reach before the food spoils, capacity) are applied before anything is offered.
 
-The system evaluates the information from both sides and uses an AI-assisted matching process to identify suitable connections.
+The AI here is not a chatbot added on top. The optimisation model is the core of the matching workflow, and every suggestion comes with a plain reason (for example, "2.3 km away, room for 50, no food received yet today").
 
-A **volunteer or NGO acts as the coordination layer**, helping connect the donor and receiver and facilitating the redistribution process.
-
-For the Hack Day prototype, NOURA is implemented as a local **Streamlit application** that demonstrates this complete workflow.
-
-## Key Features
-
-- **Donor Information:** Collects information about the event, available food, quantity, location, preparation time, dietary details, and availability.
-- **Receiver Information:** Collects organization details, location, capacity, food requirements, and availability.
-- **AI-Assisted Matching:** Uses an open-weight AI model to assist in identifying suitable donor–receiver connections.
-- **Volunteer / NGO Coordination:** Provides a coordination layer between donors and receivers to help facilitate redistribution.
+Humans stay in control: receivers accept or decline every suggested share, donors can cancel unclaimed portions, and volunteers confirm pickup and delivery.
 
 ---
 
-# Innovation and Differentiation
+## Technical Implementation
 
-NOURA focuses on solving the **connection problem** between surplus food and organizations that can use it.
+### Architecture
 
-Instead of relying entirely on manual searching, phone calls, or scattered communication, NOURA structures information from both donors and receivers and uses it to assist the matching process.
+```mermaid
+flowchart TD
+    D[Donor] -->|dish, category, veg/non-veg, portions, cooked time, pickup pin| APP[Flask app]
+    R[Receiver] -->|location, capacity, veg only / veg and non-veg| APP
+    APP --> DB[(SQLite)]
+    APP --> V[Validation + safe-until estimate]
+    V --> F["Candidate filter (candidates_for)<br/>diet, ≤ 25 km, reachable in time,<br/>not declined, has room"]
+    F --> S["Split planner (splitter.py)<br/>OR-Tools CP-SAT, greedy fallback"]
+    S --> O[Receivers see their suggested share]
+    O -->|decline| S
+    O -->|accept| A[Allocation saved atomically]
+    A --> VOL[Nearest free volunteer assigned]
+    VOL --> T[Picked up → Delivered]
+    T --> C[Meals delivered counter]
+```
 
-The project also keeps humans involved in the process.
-
-Volunteers and NGOs are not replaced by AI. They remain an important coordination layer that can review and facilitate the connection between the donor and receiver.
-
-Another important aspect of NOURA is that AI is not being added simply as a chatbot. It is incorporated into the core matching workflow to help interpret donor and receiver information and provide a meaningful recommendation.
-
----
-
-# Technical Implementation
-
-## Architecture
-
-
-    A[Food Donor] --> B[Donor Information]
-    C[Recipient Organization] --> D[Receiver Information]
-
-    B --> E[Streamlit Application]
-    D --> E
-
-    E --> F[Data Validation]
-    F --> G[Matching Logic]
-
-    G --> H[Open-Weight AI Model]
-    H --> I[AI-Assisted Recommendation]
-
-    I --> J[Volunteer / NGO Coordination]
-    J --> K[Recipient Organization]
-
-    J --> L[Redistribution Process]
+In the browser, Leaflet draws the maps using OpenStreetMap tiles, Nominatim handles place search, and OSRM draws road routes.
 
 ### Technology Stack
 
-
-| Category            | Technologies                                                                                                                                                                                                                                                                         |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Frontend**        | Server-rendered HTML using **Jinja2 templates**, **CSS**, and **plain JavaScript**. **Leaflet 1.9.4** is used for interactive maps. Pages use periodic polling for live updates.                                                                                                     |
-| **Backend**         | **Python** and **Flask**. Flask handles routing, form processing, matching logic, volunteer assignment, tracking, and autonomous replanning.                                                                                                                                         |
-| **Database**        | **SQLite**, storing receivers, volunteers, donations, and match/assignment information.                                                                                                                                                                                              |
-| **AI / ML**         | **Rule-based AI / intelligent decision system** using food compatibility, receiver capacity, actual food need, urgency/deadline, and road distance to rank matches. Automatic volunteer assignment and autonomous re-planning are also implemented. No trained ML model is required. |
-| **Infrastructure**  | Runs locally using the **Flask development server** at `127.0.0.1:5000`. Built primarily with open-source technologies.                                                                                                                                                              |
-| **APIs / Services** | **OpenStreetMap** for map data, **Nominatim** for address/geocoding, **OSRM** for road distance and route calculation, **Leaflet** for map visualization, and **Google Maps Directions** links for navigation.                                                                       |
-
-
-
-If a category or technology is not implemented in the project, specify `N/A` instead of leaving the field blank.
+| Category            | Technologies |
+| ------------------- | ------------ |
+| **Frontend**        | Server-rendered HTML with **Jinja2** templates, **CSS** and plain **JavaScript**. **Leaflet 1.9.4** (bundled in `static/vendor/leaflet`) for maps. Pages poll the backend every 6–8 s for live updates. |
+| **Backend**         | **Python** and **Flask**. Handles routing, login, form validation, candidate filtering, split planning, volunteer assignment and delivery tracking. Passwords are hashed with **Werkzeug**. |
+| **Database**        | **SQLite** (`foodbridge.db`, created on first run). Tables: `users` (donors and receivers), `volunteers`, `donations`, `allocations` (one row per receiver share = one volunteer trip), `declines`. |
+| **AI / ML**         | **Google OR-Tools CP-SAT** constraint optimisation for splitting donations, plus rule-based food-safety windows and a rule-based score for ordering a receiver's offers. No trained ML model and no LLM. |
+| **Infrastructure**  | Runs locally on the Flask development server at `127.0.0.1:5000`. Not deployed. |
+| **APIs / Services** | **OpenStreetMap** tiles, **Nominatim** (place search and reverse geocoding), **OSRM** public server (road routes and drive time shown on maps), **Google Maps** directions links. All are called from the browser; the backend makes no external API calls. |
 
 ### How It Works
 
-
-FoodBridge connects donors, receivers, and volunteers. Donors post surplus food, while receivers provide their needs, capacity, dietary preferences, and location. The system filters compatible receivers and uses OR-Tools CP-SAT to optimize how the food is distributed. Suitable volunteers are then assigned for pickup and delivery, with OpenStreetMap, Nominatim, Leaflet, and OSRM supporting location search and route planning.
-
-
+1. **Posting food.** The donor fills in the dish and picks the pickup point on the map. `estimate_safe_until()` adds a shelf-life (from a table, e.g. 4 h for cooked rice / biryani, 3 h for dairy, 24 h for dry snacks) to the cooking time. Food already past this window is rejected.
+2. **Filtering receivers.** `candidates_for()` in `app.py` keeps only receivers that accept the food's diet type, are within 25 km, can be reached before the safe-until time (straight-line distance at 25 km/h plus 20 min handling), haven't declined or already taken a share of this donation, and still have room.
+3. **Planning the split.** `plan_split()` in `splitter.py` builds a small CP-SAT model. For each candidate it decides how many portions they get (`x`) and whether they get a trip at all (`y`).
+   - Constraints: total ≤ open portions; each share ≤ receiver's remaining room; each used receiver gets at least 5 portions (or its full room if smaller); at most 4 receivers per donation.
+   - Objective: maximise portions delivered first, then prefer receivers with more need today, then fewer and shorter trips. Each portion is worth `1000 + 200·need − 10·distance`, and each trip costs `300 + 20·distance`.
+   - Solver limited to 2 seconds, single worker so the same input always gives the same plan. Only the 15 nearest candidates are considered.
+   - If OR-Tools isn't installed, a greedy planner is used instead.
+4. **Receiver decision.** Each receiver sees only donations where the current plan gives them a share, with the reason. On accept, the server re-runs the filters and claims the portions with a conditional `UPDATE`, so two receivers can't take the same portions. On decline, the receiver is excluded and the plan is recalculated for the others.
+5. **Volunteer assignment.** `assign_volunteers()` gives every accepted, unassigned share the nearest available volunteer. The volunteer marks "picked up" and "delivered", then becomes available again at the drop-off location.
+6. **Tracking.** Donor, receiver and volunteer pages show routes, status and contact details, and refresh automatically.
 
 ### Technical Decisions
 
-We chose Flask + SQLite for a lightweight and easy-to-deploy backend. OR-Tools CP-SAT was selected to handle the constrained allocation problem, allowing donations to be split across multiple receivers while respecting capacity, distance, compatibility, and food-time constraints. OpenStreetMap and OSRM provide open-source mapping and routing, while rule-based freshness estimation keeps time-sensitive food decisions simple and explainable.
+- **Optimisation instead of an LLM.** Splitting portions under capacity, minimum-share and trip limits is a constrained allocation problem. A CP-SAT solver gives a provably feasible plan, is deterministic, runs in milliseconds for this size, and is easy to explain.
+- **Hard rules outside the solver.** Diet, distance and time checks are done in plain Python before the model is built. This keeps the model tiny and lets the same checks be re-run when a receiver accepts.
+- **The plan is computed, not stored.** The split plan is recalculated from current data each time a page loads or polls. That is how re-planning after an accept, decline or new receiver happens without extra code.
+- **Straight-line distance in the backend.** Matching uses the haversine distance so the core logic works without any external service. OSRM road routes are only used for display in the browser, and fall back to a straight dashed line if OSRM is unreachable.
+- **Atomic claims.** Accepting a share uses `UPDATE ... WHERE remaining >= ?` and a unique `(donation_id, receiver_id)` constraint to prevent double allocation.
+- **Safe defaults when migrating.** An older single-receiver database is upgraded in place; old receivers become "Veg only" and old donations "Non-veg", so nothing unsafe is offered by accident.
+- **Leaflet bundled locally** so the app's map library loads even on slow event Wi-Fi (map tiles still need internet).
 
-
+---
 
 ## Implementation During the Hackathon
 
+During the Hack Day, the team built the full working prototype:
 
-| Member            | Contribution |
-| ------------------| ------------ |
-| B Aswin           | Project architecture, application logic, AI integration, GitHub and documentation |
-| C B Arunvanan     | AI/ML integration and matching logic |
-| E Sivam Pandiyan  | Streamlit interface and user experience |
-| Pragadeeshvaran R | Donor and receiver data handling, integration and testing |
+- Flask backend with SQLite schema, phone + password login and separate donor, receiver and volunteer views.
+- Map-based location picking (click, drag, place search, GPS) for donors and receivers.
+- Food-safety window estimation and expiry of old donations.
+- The first version with one receiver per donation, then extended to **multi-receiver split planning with OR-Tools CP-SAT**, veg / non-veg matching, accept / decline with automatic re-planning, and an in-place database migration from the earlier version.
+- Nearest-volunteer assignment and pickup / delivery tracking with live maps and routes.
+- Home page impact counters.
+
+Team contributions are listed in the [Team](#team) section.
 
 ## Working Application
 
-**Live Application:** [Live URL]
+**Live Application:** Not deployed. The app runs locally (see [Setup and Usage](#setup-and-usage)).
 
-[Briefly explain how the deployed application can be accessed and what functionality can be tested.]
-
-The submitted application should be functional and accessible through the provided link where applicable.
+What can be tested locally: registering donors and receivers, posting food, seeing the AI split plan on the donor map, accepting / declining as a receiver, and moving a delivery through pickup and drop-off on the Volunteers page.
 
 ## Demo Video
 
-**Demo Video:** [Video URL]
-
-[Provide a short demonstration of the working project, covering the main user flow and important functionality.]
+**Demo Video:** [Add video URL]
 
 ## Open Source and AI Usage
 
 ### AI / Models
 
-- **Google OR-Tools CP-SAT Solver**: Used as the optimization engine to intelligently split a large food donation across multiple suitable receivers while respecting constraints such as receiver capacity, minimum useful delivery size, maximum number of receivers, distance, and food availability time.
-- **Rule-based food freshness model**: Estimates the safe-until window for different food categories based on preparation time. This is used to prevent the system from suggesting deliveries that are unlikely to arrive within the estimated usable window.
-- **Rule-based matching score**: Ranks eligible receivers using factors such as distance, remaining food time, and receiver capacity.
+- **Google OR-Tools CP-SAT solver** (`splitter.py`): the optimisation engine that splits one donation across multiple receivers, respecting receiver capacity, minimum useful share size (5 portions), maximum receivers per donation (4), and preferring need and shorter trips.
+- **Rule-based food-safety window** (`SHELF_LIFE_HOURS`, `estimate_safe_until()` in `app.py`): a manually defined shelf-life per food category, used to block unsafe listings and to reject receivers that can't be reached in time.
+- **Rule-based offer score** (`match_score()` in `app.py`): orders the offers a receiver sees, using distance, time left and capacity fit.
+
+FoodBridge does **not** use a generative AI model or LLM (such as GPT, Qwen, Llama or Mistral), and no trained ML model.
 
 ### Open Source Components
 
-- **Flask**: Python web framework used to build the FoodBridge backend and web application.
-- **SQLite**: Lightweight database used to store users, donations, receivers, allocations, and delivery information.
-- **Google OR-Tools**: Open-source optimization toolkit; CP-SAT is used for multi-receiver donation allocation.
-- **Leaflet**: Open-source JavaScript mapping library used for interactive maps and markers.
-- **OpenStreetMap**: Provides open map data and map tiles.
-- **Nominatim**: OpenStreetMap-based geocoding and place-search service used for location search and reverse geocoding.
-- **OSRM (Open Source Routing Machine)**: Used to calculate road routes, distances, and estimated travel times between donors, receivers, and volunteers.
-- **Google Maps**: Used as an optional external directions link for users who want turn-by-turn navigation.
+- **Flask** (with Jinja2 and Werkzeug): web framework, templating and password hashing.
+- **SQLite**: local database.
+- **Google OR-Tools**: CP-SAT solver for split planning.
+- **Leaflet 1.9.4**: interactive maps (bundled in `static/vendor/leaflet`).
+- **OpenStreetMap**: map tiles and map data.
+- **Nominatim**: place search and reverse geocoding.
+- **OSRM (Open Source Routing Machine)**: road routes, distances and drive times shown on the maps.
+- **Google Maps** (not open source): optional directions link for turn-by-turn navigation.
 
 ### Data / Datasets
 
-- **No external training dataset is used.**
-- User-created donor, receiver, volunteer, and donation data is stored in the application's SQLite database.
-- Food-category freshness rules are manually defined in the application rather than learned from a dataset.
+- No external dataset is used.
+- Donor, receiver and donation data is entered by users and stored in SQLite. No donor or receiver data is pre-loaded.
+- **Volunteers are demo data:** 5 volunteers around Kochi / Angamaly are seeded on first run (`DEMO_VOLUNTEERS` in `app.py`). There is no volunteer sign-up yet.
+- Food shelf-life rules are manually defined, not learned from data.
 
 ### Licenses and Attribution
 
-FoodBridge uses open-source software and open geographic data. We retain the relevant attribution for OpenStreetMap contributors and use the respective projects according to their licenses.
-
-- **OpenStreetMap data**: © OpenStreetMap contributors
+- **OpenStreetMap data**: © OpenStreetMap contributors (ODbL). Attribution is shown on every map.
 - **Leaflet**: BSD-2-Clause
 - **Google OR-Tools**: Apache License 2.0
-- **Flask**: BSD-3-Clause
+- **Flask, Jinja2, Werkzeug**: BSD-3-Clause
 - **SQLite**: Public domain
 - **OSRM**: BSD-2-Clause
-- **Nominatim / OpenStreetMap**: OpenStreetMap project services and attribution requirements apply.
+- **Nominatim / OSRM public servers**: used under the OpenStreetMap Foundation and OSRM demo-server usage policies (light, demo-level use only).
 
-The project does not currently use a generative AI/LLM such as GPT, Qwen, Llama, or Mistral. The core AI/optimization component is the open-source OR-Tools constraint optimization system, combined with explainable rule-based matching and freshness estimation.
+---
 
 ## Setup and Usage
 
 ### Prerequisites
 
-- Python 3.10 or later
-- Git
-- Internet connection for map, geocoding, and routing services
+- Python 3.9 or newer (tested with Python 3.12)
+- pip
+- A browser with an internet connection (for map tiles, place search and routes)
 
 ### Installation
 
 ```bash
-git clone https://github.com/AestheticAsh08/HTF-008AIgnite/tree/main
+git clone [repository-url]
 cd foodbridge
-
+python -m venv venv
+source venv/bin/activate        # Windows: venv\Scripts\activate
+pip install -r requirements.txt
 ```
 
 ### Environment Variables
 
+See `.env.example`.
+
 ```env
-no variables
+SECRET_KEY=
 ```
 
-
+`SECRET_KEY` signs the login session cookie. It is optional for a local demo (a development default is used), but should be set to a long random value anywhere else. The app reads it from the environment, so set it in your shell before running, for example `export SECRET_KEY=...` (Windows PowerShell: `$env:SECRET_KEY="..."`).
 
 ### Running the Project
 
@@ -215,50 +226,70 @@ no variables
 python app.py
 ```
 
+Open http://127.0.0.1:5000. The database `foodbridge.db` is created automatically on first run. Delete it to start fresh.
+
 ### Usage
 
-1. Register/login as a **Donor, Receiver, or Volunteer**.
-2. Donors post surplus food with quantity, type, preparation time, and location.
-3. Receivers provide their capacity, dietary preference, and location.
-4. FoodBridge matches and optimizes donations, then assigns available volunteers for delivery.
-5. Track the donation from **pickup to delivery** using the map and delivery status.
+Use two browser windows (one normal, one incognito) so the donor and receiver logins don't replace each other.
 
-## Devpost Submission
+1. Register 2–3 **receivers** a few km apart with small capacities (e.g. 30, 40, 50). Make at least one "Veg only" and one "Veg and non-veg".
+2. Register as a **donor** and post a large non-veg dish (e.g. 120 portions of chicken biryani). The message shows the AI split plan, and the donor map draws dashed lines to each planned receiver. The veg-only receiver is never offered it.
+3. Log in as a receiver. It sees only its suggested share. **Accept** it, or **Decline** and watch the donor's plan re-shuffle the portions among the others.
+4. Each accepted share gets its own nearest free volunteer. On the **Volunteers** page, pick that volunteer and use "I picked it up" and "I delivered it".
+5. The home page "meals delivered" counter goes up.
 
-**Devpost Project:** [Devpost Project URL]
+**If donor and receiver don't connect:** the donor page shows how many receivers are within 25 km. If it says none, the receiver is pinned somewhere else. Zoom the map to your area before searching a locality (search favours the visible area), and check the pin before submitting. Receivers only see a donation while it is open and inside its safe-until time.
 
-[Add the link to the team's Devpost submission. Ensure the Devpost project page is complete and contains the required project information, links, media, and team details.]
+### Current Limitations and Next Steps
+
+Not done in the prototype: receiver verification, OTP login, SMS / WhatsApp notifications, real volunteer accounts with live GPS, HTTPS, and food-safety compliance checks (FSSAI guidelines in India). Planned next: one vehicle route dropping several shares in a row (a vehicle routing problem, also in OR-Tools), a surplus-prediction model trained on past event data, and a vision model to estimate dish type and portions from a photo.
+
+---
+
+## Challenges and Learnings
+
+- **From one receiver to many.** The first version sent a whole donation to one receiver, which fails when the donation is bigger than any single receiver's capacity. Modelling it as an optimisation problem with CP-SAT, and adding a minimum share size so volunteers aren't sent far for 2 plates, made the split practical.
+- **Keeping the plan consistent while people respond.** Receivers accept and decline at different times. Recalculating the plan from current data instead of storing it, and claiming portions atomically, avoided stale plans and double allocation.
+- **Food safety and diet as hard rules.** Veg / non-veg and the safe-until window had to be enforced on the server, not only hidden in the UI, so a stale page can't accept food it shouldn't.
+- **Location accuracy.** Place search often matched the wrong locality with the same name, which put donors and receivers far apart. Biasing Nominatim search to the visible map area and showing nearby receiver counts on the donor page fixed most of this.
+- **Depending on free public services.** Map tiles, OSRM and Nominatim can fail on weak event Wi-Fi, so the app shows a warning when tiles fail, falls back to straight lines when routing fails, and keeps all matching logic in the backend without external calls.
 
 ## Credits and License
 
 ### Credits
 
-[Credit libraries, frameworks, datasets, models, APIs, contributors, and other external resources used.]
+Built by team AIgnite (B Aswin, C B Arunvanan, E Sivam Pandiyan, Pragadeeshvaran R) for Hacktoberfest Hack Day — Coimbatore 2026.
+
+Thanks to the projects listed under [Open Source Components](#open-source-components), and to OpenStreetMap contributors for the map data.
 
 ### License
 
-[License name and/or link.]
+This project is licensed under the MIT License. See [LICENSE](LICENSE).
+
+## Devpost Submission
+
+**Devpost Project:** [Add Devpost project URL]
 
 ## Submission Checklist
 
-- [ ] Project title and description added
-- [ ] All team members listed
-- [ ] Problem clearly explained
-- [ ] Reason for choosing the problem explained
-- [ ] Solution and key features documented
-- [ ] Innovation and differentiation explained
-- [ ] Architecture included
-- [ ] Technical implementation documented
-- [ ] Work completed during the hackathon documented
-- [ ] Team contributions documented
-- [ ] Working application is functional
-- [ ] Live application link added where applicable
+- [x] Project title and description added
+- [x] All team members listed
+- [x] Problem clearly explained
+- [x] Reason for choosing the problem explained
+- [x] Solution and key features documented
+- [x] Innovation and differentiation explained
+- [x] Architecture included
+- [x] Technical implementation documented
+- [x] Work completed during the hackathon documented
+- [x] Team contributions documented
+- [x] Working application is functional
+- [x] Live application link added where applicable (N/A — runs locally, see Setup)
 - [ ] Demo video added
-- [ ] AI and open-source components documented
-- [ ] Setup and usage instructions tested
-- [ ] Challenges and learnings documented
+- [x] AI and open-source components documented
+- [x] Setup and usage instructions tested
+- [x] Challenges and learnings documented
 - [ ] Devpost submission completed
 - [ ] Devpost link added
-- [ ] Credits added
-- [ ] License added
-- [ ] Repository is organized and complete
+- [x] Credits added
+- [x] License added
+- [x] Repository is organized and complete
